@@ -1,0 +1,40 @@
+{
+  "Comment": "A description of my state machine",
+  "StartAt": "GetCalendarState",
+  "States": {
+    "GetCalendarState": {
+      "Type": "Task",
+      "Parameters": {
+        "CalendarNames": [
+          "`営業時間用のカレンダー名`",
+          "土日祝用のカレンダー名"
+        ]
+      },
+      "Resource": "arn:aws:states:::aws-sdk:ssm:getCalendarState",
+      "Next": "Choice"
+    },
+    "Choice": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.State",
+          "StringEquals": "OPEN",
+          "Next": "Wait"
+        }
+      ],
+      "Default": "Pass"
+    },
+    "Wait": {
+      "Type": "Wait",
+      "Seconds": 5,
+      "Next": "Success"
+    },
+    "Success": {
+      "Type": "Succeed"
+    },
+    "Pass": {
+      "Type": "Pass",
+      "End": true
+    }
+  }
+}
