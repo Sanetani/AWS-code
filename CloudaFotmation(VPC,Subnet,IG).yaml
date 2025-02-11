@@ -1,0 +1,73 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  VpcCIDR:
+    Type: String
+    Default: "10.0.0.0/16"
+    Description: The CIDR block for the VPC.
+  
+  PublicSubnetCIDR:
+    Type: String
+    Default: "10.0.0.0/24"
+    Description: The CIDR block for the public subnet.
+  
+  PrivateSubnetCIDR1:
+    Type: String
+    Default: "10.0.1.0/24"
+    Description: The CIDR block for the private subnet 1.
+  
+  PrivateSubnetCIDR2:
+    Type: String
+    Default: "10.0.2.0/24"
+    Description: The CIDR block for the private subnet 2.
+
+Resources:
+  
+  # VPC and Subnets
+  VPC:
+    Type: 'AWS::EC2::VPC'
+    Properties: 
+      CidrBlock: !Ref VpcCIDR
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: Tokyo-VPC
+  
+  PublicSubnet:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Ref PublicSubnetCIDR
+      AvailabilityZone: !Select [ 0, !GetAZs '' ]
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: PublicSubnet
+  
+  PrivateSubnet1:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Ref PrivateSubnetCIDR1
+      AvailabilityZone: !Select [ 0, !GetAZs '' ]
+      Tags:
+        - Key: Name
+          Value: PrivateSubnet1
+
+  PrivateSubnet2:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Ref PrivateSubnetCIDR2
+      AvailabilityZone: !Select [ 1, !GetAZs '' ]
+      Tags:
+        - Key: Name
+          Value: PrivateSubnet2
+
+  # Internet Gateway
+  InternetGateway:
+    Type: 'AWS::EC2::InternetGateway'
+    Properties:
+      Tags:
+        - Key: Name
+          Value: tokyo-igw

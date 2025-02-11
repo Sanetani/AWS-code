@@ -1,0 +1,60 @@
+{
+  "Comment": "State machine to manage MySQL instance",
+  "StartAt": "RDSインスタンスを停止",
+  "States": {
+    "RDSインスタンスを停止": {
+      "Type": "Task",
+      "Next": "Wait - 7日間",
+      "Resource": "arn:aws:states:::aws-sdk:rds:stopDBInstance",
+      "Parameters": {
+        "DbInstanceIdentifier": "データベース名"
+      },
+      "ResultPath": null
+    },
+    "Wait - 7日間": {
+      "Type": "Wait",
+      "Seconds": 604800,
+      "Next": "DescribeDBInstances"
+    },
+    "DescribeDBInstances": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::aws-sdk:rds:describeDBInstances",
+      "Parameters": {
+        "DbInstanceIdentifier": "データベース名"
+      },
+      "Next": "Choice - インスタンスステータス",
+      "ResultSelector": {
+        "Db_identifier.$": "$.DbInstances[0].DbInstanceIdentifier",  
+        "status.$": "$.DbInstances[0].DbInstanceStatus"
+      }
+    },
+    "Choice - インスタンスステータス": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.status",
+          "StringMatches": "stopping",
+          "Next": "RDSインスタンスを一時的に起動"
+        }
+      ],
+      "Default": "Success - インスタンスが別の要因で起動または削除されました"
+    },
+    "RDSインスタンスを一時的に起動": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::aws-sdk:rds:startDBInstance",
+      "Parameters": {
+        "DbInstanceIdentifier": "データベース名"
+      },
+      "ResultPath": null,
+      "Next": "Wait - 10分"
+    },
+    "Wait - 10分": {
+      "Type": "Wait",
+      "Seconds": 600,
+      "Next": "RDSインスタンスを停止"
+    },
+    "Success - インスタンスが別の要因で起動または削除されました": {
+      "Type": "Succeed"
+    }
+  }
+}
